@@ -1,0 +1,27 @@
+{
+  "name": "triton-autoscaler",
+  "version": "1.0.0",
+  "description": "Autoscales deployments based on inactive Kue Jobs",
+  "main": "index.js",
+  "repository": "git+ssh://github.com/tritonmedia/autoscaler",
+  "author": "Jared Allard <jaredallard@outlook.com>",
+  "license": "MIT",
+  "private": false,
+  "dependencies": {
+    "fecha": "^2.3.3",
+    "kubernetes-client": "^5.4.0",
+    "kue": "^0.11.6",
+    "lodash": "^4.17.10",
+    "pino": "^5.1.1",
+    "pretty-ms": "^3.2.0",
+    "triton-core": "^1.0.2"
+  },
+  "devDependencies": {
+    "eslint": "^5.4.0",
+    "eslint-config-standard": "^11.0.0",
+    "eslint-plugin-import": "^2.14.0",
+    "eslint-plugin-node": "^7.0.1",
+    "eslint-plugin-promise": "^4.0.0",
+    "eslint-plugin-standard": "^3.1.0"
+  }
+}

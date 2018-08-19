@@ -70,7 +70,7 @@ const init = async () => {
         try {
           await kube.scaleUp('triton-converter')
         } catch (err) {
-          logger.error('failed to scale up, requeue.', err)
+          logger.error('failed to scale up, requeue.')
         }
       }
     }
@@ -86,7 +86,7 @@ const init = async () => {
         try {
           await kube.scaleDown('triton-converter')
         } catch (err) {
-          logger.error('failed to scale down, requeue.', err)
+          logger.error('failed to scale down, requeue.')
         }
       }
     }
@@ -121,6 +121,8 @@ const init = async () => {
         statuses.isPendingScaleDown.status = true
         statuses.isPendingScaleDown.since = new Date()
       }
+
+      logger.info(replicas - active, 'replica(s) are uneeded since', statuses.isPendingScaleDown.since.toISOString())
     } else {
       logger.debug('canceled scaleDown, if there was one present')
       statuses.isPendingScaleDown.status = false

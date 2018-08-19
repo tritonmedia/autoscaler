@@ -69,6 +69,8 @@ const init = async () => {
 
         try {
           await kube.scaleUp('triton-converter')
+          statuses.isPendingScaleUp.status = false
+          statuses.lastScaleUpTime = new Date()
         } catch (err) {
           logger.error('failed to scale up, requeue.')
         }
@@ -85,6 +87,8 @@ const init = async () => {
 
         try {
           await kube.scaleDown('triton-converter')
+          statuses.isPendingScaleDown.status = false
+          statuses.lastScaleDownTime = new Date()
         } catch (err) {
           logger.error('failed to scale down, requeue.')
         }
@@ -97,7 +101,7 @@ const init = async () => {
   // add to the 'waiting' object
   emitter.on('inactive', inactive => {
     if (inactive !== 0) {
-      logger.info('there are pending jobs')
+      logger.info(inactive, 'job(s) have been pending since', statuses.isPendingScaleUp.since.toISOString())
 
       if (!statuses.isPendingScaleUp.status) {
         statuses.isPendingScaleUp.status = true

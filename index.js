@@ -56,7 +56,8 @@ const init = async () => {
 
   // wait a bit to spin up a new deployment
   setInterval(async function () {
-    const scaleTime = (1000 * 60) * 1
+    // 10 minutes
+    const scaleTime = (1000 * 60) * 5
     const now = new Date()
 
     // scale up

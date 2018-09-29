@@ -13,6 +13,9 @@ const Config = require('triton-core/config')
 const kue = require('kue')
 const path = require('path')
 const events = require('events')
+const Redis = require('ioredis')
+const os = require('os')
+const create = require('lodash.create')
 const logger = require('pino')({
   name: path.basename(__filename)
 })
@@ -42,6 +45,27 @@ const printStatus = () => {
   child.info(`autoscale status report`)
 }
 
+const metricsDb = dyn('redis') + '/1'
+logger.info('metrics is at', metricsDb)
+const metrics = new Redis(metricsDb)
+
+
+/**
+ * Publish the status to the metrics pubsub
+ * @param {Object} status status object
+ * @example
+ *  publishStatus({
+ *    event: 'scaleUp'
+ * })
+ * @returns {Promise} 
+ */
+const publishStatus = async status => {
+  const event = create({
+    host: os.hostname()
+  }, status)
+  return metrics.publish('events', JSON.stringify(event))
+}
+
 const init = async () => {
   const config = await Config('events')
   const emitter = new events.EventEmitter()
@@ -50,12 +74,13 @@ const init = async () => {
   })
 
   const kube = await require('./lib/kube')(config)
-  const watcher = require('./lib/watcher')
+  const watcher = require('./lib/watcher').watcher(queue, emitter)
 
-  setInterval(watcher.watcher(queue, emitter), 5000)
 
-  // wait a bit to spin up a new deployment
+  // check every 5 seconds
   setInterval(async function () {
+    watcher()
+
     // 10 minutes
     const scaleTime = (1000 * 60) * 5
     const now = new Date()
@@ -64,12 +89,19 @@ const init = async () => {
     if (statuses.isPendingScaleUp.status && !statuses.isPendingScaleDown.status) {
       const diff = now.valueOf() - statuses.isPendingScaleUp.since.valueOf()
 
-      // 1 minute
       if (diff > scaleTime) {
         logger.info('triggered scale up')
 
+        if(!await kube.canScale('triton-converter')) {
+          logger.warn('Unable to scale up due to pending, or uavailable pods being present.')
+          return printStatus()
+        }
+
         try {
           await kube.scaleUp('triton-converter')
+          publishStatus({
+            event: 'scaleUp'
+          })
           statuses.isPendingScaleUp.status = false
           statuses.lastScaleUpTime = new Date()
         } catch (err) {
@@ -82,12 +114,14 @@ const init = async () => {
     if (statuses.isPendingScaleDown.status && !statuses.isPendingScaleUp.status) {
       const diff = now.valueOf() - statuses.isPendingScaleDown.since.valueOf()
 
-      // 1 minute
       if (diff > scaleTime) {
         logger.info('triggered scale down')
 
         try {
           await kube.scaleDown('triton-converter')
+          publishStatus({
+            event: 'scaleDown'
+          })
           statuses.isPendingScaleDown.status = false
           statuses.lastScaleDownTime = new Date()
         } catch (err) {
@@ -97,43 +131,62 @@ const init = async () => {
     }
 
     printStatus()
-  }, 10000)
+  }, 5000)
 
   // add to the 'waiting' object
   emitter.on('inactive', inactive => {
-    if (inactive !== 0) {
-      logger.info(inactive, 'job(s) have been pending since', statuses.isPendingScaleUp.since.toISOString())
+    const inactiveJobs = inactive.length
+    if (inactiveJobs !== 0) {
+      logger.info(inactiveJobs, 'job(s) have been pending since', statuses.isPendingScaleUp.since.toISOString())
 
       if (!statuses.isPendingScaleUp.status) {
+        publishStatus({
+          event: 'scaleUpPending',
+          cause: inactive
+        })
+
         statuses.isPendingScaleUp.status = true
         statuses.isPendingScaleUp.since = new Date()
       }
-    } else {
+    } else if (statuses.isPendingScaleUp.status) {
+      publishStatus({
+        event: 'scaleUpCanceled'
+      })
       logger.debug('canceled scaleUp, if there was one present')
+
       statuses.isPendingScaleUp.status = false
     }
 
-    logger.debug(`inactive=${inactive}`)
+    logger.debug(`inactive=${inactiveJobs}`)
   })
 
   emitter.on('active', async active => {
+    const activeJobs = active.length
     // process new stuff
     const replicas = await kube.getReplicas('triton-converter')
-    if (replicas > active) {
+    if (replicas > activeJobs) {
       logger.debug('there are more replicas than active jobs, scaleDown')
 
       if (!statuses.isPendingScaleDown.status) {
+        publishStatus({
+          event: 'scaleDownPending',
+          cause: active
+        })
         statuses.isPendingScaleDown.status = true
         statuses.isPendingScaleDown.since = new Date()
       }
 
-      logger.info(replicas - active, 'replica(s) are uneeded since', statuses.isPendingScaleDown.since.toISOString())
-    } else {
+      logger.info(replicas - activeJobs, 'replica(s) are uneeded since', statuses.isPendingScaleDown.since.toISOString())
+    } else if (statuses.isPendingScaleDown.status) {
+      publishStatus({
+        event: 'scaleDownCanceled'
+      })
       logger.debug('canceled scaleDown, if there was one present')
+
       statuses.isPendingScaleDown.status = false
     }
 
-    logger.debug(`replicas=${replicas}, active=${active}`)
+    logger.debug(`replicas=${replicas}, active=${activeJobs}`)
   })
 
   queue.watchStuckJobs()

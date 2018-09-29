@@ -49,6 +49,9 @@ const metricsDb = dyn('redis') + '/1'
 logger.info('metrics is at', metricsDb)
 const metrics = new Redis(metricsDb)
 
+// FIXME: convert to CRD some day
+const deploymentName = 'triton-converter'
+
 
 /**
  * Publish the status to the metrics pubsub
@@ -92,13 +95,14 @@ const init = async () => {
       if (diff > scaleTime) {
         logger.info('triggered scale up')
 
-        if(!await kube.canScale('triton-converter')) {
+        const canScale = await kube.canScale(deploymentName)
+        if(!canScale) {
           logger.warn('Unable to scale up due to pending, or uavailable pods being present.')
           return printStatus()
         }
 
         try {
-          await kube.scaleUp('triton-converter')
+          await kube.scaleUp(deploymentName)
           publishStatus({
             event: 'scaleUp'
           })
@@ -118,7 +122,7 @@ const init = async () => {
         logger.info('triggered scale down')
 
         try {
-          await kube.scaleDown('triton-converter')
+          await kube.scaleDown(deploymentName)
           publishStatus({
             event: 'scaleDown'
           })
@@ -134,9 +138,10 @@ const init = async () => {
   }, 5000)
 
   // add to the 'waiting' object
-  emitter.on('inactive', inactive => {
+  emitter.on('inactive', async inactive => {
     const inactiveJobs = inactive.length
-    if (inactiveJobs !== 0) {
+    const canScale = await kube.canScale(deploymentName)
+    if (inactiveJobs !== 0 && canScale) {
       logger.info(inactiveJobs, 'job(s) have been pending since', statuses.isPendingScaleUp.since.toISOString())
 
       if (!statuses.isPendingScaleUp.status) {
@@ -162,8 +167,9 @@ const init = async () => {
 
   emitter.on('active', async active => {
     const activeJobs = active.length
+    console.log(activeJobs)
     // process new stuff
-    const replicas = await kube.getReplicas('triton-converter')
+    const replicas = await kube.getReplicas(deploymentName)
     if (replicas > activeJobs) {
       logger.debug('there are more replicas than active jobs, scaleDown')
 

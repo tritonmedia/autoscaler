@@ -167,7 +167,6 @@ const init = async () => {
 
   emitter.on('active', async active => {
     const activeJobs = active.length
-    console.log(activeJobs)
     // process new stuff
     const replicas = await kube.getReplicas(deploymentName)
     if (replicas > activeJobs) {

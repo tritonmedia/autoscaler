@@ -52,7 +52,6 @@ const metrics = new Redis(metricsDb)
 // FIXME: convert to CRD some day
 const deploymentName = 'triton-converter'
 
-
 /**
  * Publish the status to the metrics pubsub
  * @param {Object} status status object
@@ -60,7 +59,7 @@ const deploymentName = 'triton-converter'
  *  publishStatus({
  *    event: 'scaleUp'
  * })
- * @returns {Promise} 
+ * @returns {Promise}
  */
 const publishStatus = async status => {
   const event = create({
@@ -79,7 +78,6 @@ const init = async () => {
   const kube = await require('./lib/kube')(config)
   const watcher = require('./lib/watcher').watcher(queue, emitter)
 
-
   // check every 5 seconds
   setInterval(async function () {
     watcher()
@@ -96,7 +94,7 @@ const init = async () => {
         logger.info('triggered scale up')
 
         const canScale = await kube.canScale(deploymentName)
-        if(!canScale) {
+        if (!canScale) {
           logger.warn('Unable to scale up due to pending, or uavailable pods being present.')
           return printStatus()
         }
@@ -197,6 +195,10 @@ const init = async () => {
   queue.watchStuckJobs()
 
   logger.info('initialized')
+}
+
+if (process.env.DEBUG) {
+  logger.level = 'debug'
 }
 
 init()

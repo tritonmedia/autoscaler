@@ -9,6 +9,7 @@ jobs:
           name: Run Tests
           command: |
             set -e
+            yarn --production=false
             yarn test
   build-push:
     docker:

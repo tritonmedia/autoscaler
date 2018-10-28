@@ -7,6 +7,9 @@
   "author": "Jared Allard <jaredallard@outlook.com>",
   "license": "MIT",
   "private": false,
+  "scripts": {
+    "test": "mocha"
+  },
   "dependencies": {
     "fecha": "^2.3.3",
     "ioredis": "^4.0.0",
@@ -25,6 +28,8 @@
     "eslint-plugin-import": "^2.14.0",
     "eslint-plugin-node": "^7.0.1",
     "eslint-plugin-promise": "^4.0.0",
-    "eslint-plugin-standard": "^3.1.0"
+    "eslint-plugin-standard": "^3.1.0",
+    "mocha": "^5.2.0",
+    "mocha-eslint": "^4.1.0"
   }
 }

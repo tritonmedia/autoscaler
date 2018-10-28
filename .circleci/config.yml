@@ -10,7 +10,7 @@ jobs:
           command: |
             set -e
             yarn test
-  build:
+  build-push:
     docker:
       - image: docker:18.06.1-ce
     steps:
@@ -42,7 +42,7 @@ workflows:
   build-test-push:
     jobs:
       - test
-      - build:
+      - build-push:
           context: Docker
           requires:
             - test

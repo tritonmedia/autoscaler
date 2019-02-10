@@ -51,6 +51,7 @@ const metrics = new Redis(metricsDb)
 
 // FIXME: convert to CRD some day
 const deploymentName = 'triton-converter'
+const jobType = 'convert'
 
 /**
  * Publish the status to the metrics pubsub
@@ -76,7 +77,7 @@ const init = async () => {
   })
 
   const kube = await require('./lib/kube')(config)
-  const watcher = require('./lib/watcher').watcher(queue, emitter)
+  const watcher = require('./lib/watcher').watcher(queue, jobType, emitter)
 
   // check every 5 seconds
   setInterval(async function () {

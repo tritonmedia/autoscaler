@@ -15,11 +15,16 @@ const path = require('path')
 const events = require('events')
 const Redis = require('ioredis')
 const os = require('os')
-const create = require('lodash.create')
 const logger = require('pino')({
   name: path.basename(__filename)
 })
 
+// lodash shim to make it easier to understand what's going on here.
+const _ = {
+  create: require('lodash.create')
+}
+
+// statues is the shim used for each eligible watcher to determine if it can be scaled.
 const statuses = {
   isPendingScaleDown: {
     status: false,
@@ -33,16 +38,11 @@ const statuses = {
   lastScaleUpTime: new Date()
 }
 
+// scaleTables contains jobs that should be executed after they are done pending
+const scaleTable = []
+
 const printStatus = () => {
-  const scaleDown = statuses.isPendingScaleDown.status
-  const scaleUp = statuses.isPendingScaleUp.status
-
-  const child = logger.child({
-    scaleDown: scaleDown,
-    scaleUp: scaleUp
-  })
-
-  child.info(`autoscale status report`)
+  // TODO: re-implement this
 }
 
 const metricsDb = dyn('redis') + '/1'
@@ -50,8 +50,19 @@ logger.info('metrics is at', metricsDb)
 const metrics = new Redis(metricsDb)
 
 // FIXME: convert to CRD some day
-const deploymentName = 'triton-converter'
-const jobType = 'convert'
+// watchers containers a list of watchers, which tell the
+// autoscaler what queue to watch and then, in turn, which
+// deployment should be scaled off of that queue.
+const watchers = [
+  {
+    deploymentName: 'triton-converter',
+    jobType: 'convert'
+  },
+  {
+    deploymentName: 'triton-downloader',
+    jobType: 'newMedia'
+  }
+]
 
 /**
  * Publish the status to the metrics pubsub
@@ -63,7 +74,7 @@ const jobType = 'convert'
  * @returns {Promise}
  */
 const publishStatus = async status => {
-  const event = create({
+  const event = _.create({
     host: os.hostname()
   }, status)
   return metrics.publish('events', JSON.stringify(event))
@@ -79,8 +90,7 @@ const init = async () => {
   const kube = await require('./lib/kube')(config)
   const watcher = require('./lib/watcher').watcher(queue, jobType, emitter)
 
-  // check every 5 seconds
-  setInterval(async function () {
+  const poll = async function () {
     watcher()
 
     // 10 minutes
@@ -134,7 +144,10 @@ const init = async () => {
     }
 
     printStatus()
-  }, 5000)
+  }
+
+  // check every 5 seconds
+  setInterval(poll, 5000)
 
   // add to the 'waiting' object
   emitter.on('inactive', async inactive => {

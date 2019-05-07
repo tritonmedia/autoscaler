@@ -27,8 +27,10 @@ const _ = {
   create: require('lodash.create')
 }
 
-const printStatus = () => {
-  // TODO: re-implement this
+const jobQueue = new JobQueue()
+const printStatus = async () => {
+  const pendingJobs = await jobQueue.list()
+  logger.info(`${pendingJobs.length} pending operations`)
 }
 
 const metricsDb = dyn('redis') + '/1'
@@ -80,11 +82,16 @@ const publishStatus = async status => {
  *
  * @returns {String} watcherId
  */
-const createWatcher = async function (w, kube, queue, jobQueue) {
+const createWatcher = async function (w, kube, queue) {
   const emitter = new events.EventEmitter()
   const watcherId = uuid()
 
   watcher.watcher(queue, w.jobType, emitter)
+
+  let wlog = logger.child({
+    queue: w.jobType,
+    deplyment: w.deploymentName
+  })
 
   // add to the 'waiting' object
   emitter.on('inactive', async inactive => {
@@ -102,11 +109,12 @@ const createWatcher = async function (w, kube, queue, jobQueue) {
     const activeJobs = active.length
     // process new stuff
     const replicas = await kube.getReplicas(w.deploymentName)
+    wlog.info(`activeJobs=${activeJobs},replicas=${replicas}`)
     if (replicas > activeJobs) {
       logger.debug('there are more replicas than active jobs, scaleDown')
 
       await jobQueue.create({
-        op: 'scaleUp',
+        op: 'scaleDown',
         watcher: watcherId
       })
     }
@@ -120,8 +128,6 @@ const init = async () => {
   const queue = kue.createQueue({
     redis: dyn('redis')
   })
-
-  const jobQueue = new JobQueue()
 
   logger.info('loading kubespec')
   const kube = await require('./lib/kube')(config)
@@ -152,14 +158,14 @@ const init = async () => {
       }
     }
 
-    printStatus()
+    await printStatus()
   }
 
   // check every 5 seconds
   setInterval(poll, 5000)
 
   for (const w of watchers) {
-    const watcherId = await createWatcher(w, kube, queue, jobQueue)
+    const watcherId = await createWatcher(w, kube, queue)
     logger.info(`created watcher '${watcherId}' from '%o'`, w)
   }
 
@@ -168,10 +174,6 @@ const init = async () => {
   logger.info('initialized')
 
   poll()
-}
-
-if (process.env.DEBUG) {
-  logger.level = 'debug'
 }
 
 init()

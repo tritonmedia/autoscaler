@@ -14,7 +14,7 @@ const kue = require('kue')
 const path = require('path')
 const events = require('events')
 const Redis = require('ioredis')
-const watcher = require('./lib/watcher')
+const Watcher = require('./lib/watcher')
 const JobQueue = require('./lib/job')
 const os = require('os')
 const uuid = require('uuid/v4')
@@ -30,7 +30,13 @@ const _ = {
 const jobQueue = new JobQueue()
 const printStatus = async () => {
   const pendingJobs = await jobQueue.list()
-  logger.info(`${pendingJobs.length} pending operations`)
+  for (const op of pendingJobs) {
+    const w = watcherTable.get(op.data.watcher)
+    const queue = w.jobType
+    const deployment = w.deployment
+
+    logger.info(`Pending Operation: op=${op.data.op},queue=${queue},deployment=${deployment},watcher=${op.data.watcher}`)
+  }
 }
 
 const metricsDb = dyn('redis') + '/1'
@@ -58,6 +64,11 @@ const watchers = [
 ]
 
 /**
+ * @type {Map<String, Watcher>}
+ */
+const watcherTable = new Map()
+
+/**
  * Publish the status to the metrics pubsub
  * @param {Object} status status object
  * @example
@@ -77,16 +88,13 @@ const publishStatus = async status => {
  * Creates and manages a queue watcher
  * @param {WatcherData} w watcher to setup
  * @param {kube} kube kubernetes client
- * @param {kube.Queue} queue kue queue object
+ * @param {kue.Queue} queue kue queue object
  * @param {JobQueue} jobQueue job queue
  *
  * @returns {String} watcherId
  */
 const createWatcher = async function (w, kube, queue) {
-  const emitter = new events.EventEmitter()
-  const watcherId = uuid()
-
-  watcher.watcher(queue, w.jobType, emitter)
+  const watcher = new Watcher(w.jobType, w.deploymentName, queue)
 
   let wlog = logger.child({
     queue: w.jobType,
@@ -94,18 +102,18 @@ const createWatcher = async function (w, kube, queue) {
   })
 
   // add to the 'waiting' object
-  emitter.on('inactive', async inactive => {
+  watcher.on('inactive', async inactive => {
     const inactiveJobs = inactive.length
     const canScale = await kube.canScale(w.deploymentName)
     if (inactiveJobs !== 0 && canScale) {
       await jobQueue.create({
         op: 'scaleUp',
-        watcher: watcherId
+        watcher: watcher.id
       })
     }
   })
 
-  emitter.on('active', async active => {
+  watcher.on('active', async active => {
     const activeJobs = active.length
     // process new stuff
     const replicas = await kube.getReplicas(w.deploymentName)
@@ -115,12 +123,16 @@ const createWatcher = async function (w, kube, queue) {
 
       await jobQueue.create({
         op: 'scaleDown',
-        watcher: watcherId
+        watcher: watcher.id
       })
     }
   })
 
-  return watcherId
+  watcher.start()
+
+  watcherTable.set(watcher.id, watcher)
+
+  return watcher.id
 }
 
 const init = async () => {

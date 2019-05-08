@@ -114,7 +114,7 @@ const createWatcher = async function (w, kube, queue) {
         op: 'scaleDown',
         watcher: watcher.id,
         queue: w.jobType
-      })
+      }, 0.1)
     }
   })
 

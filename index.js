@@ -107,14 +107,13 @@ const createWatcher = async function (w, kube, queue) {
 
   watcher.on('active', async active => {
     const activeJobs = active.length
-    // process new stuff
     const replicas = await kube.getReplicas(w.deploymentName)
     if (replicas > activeJobs) {
       await jobQueue.create({
         op: 'scaleDown',
         watcher: watcher.id,
         queue: w.jobType
-      }, 0.1)
+      })
     }
   })
 

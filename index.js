@@ -14,44 +14,51 @@ const kue = require('kue')
 const path = require('path')
 const events = require('events')
 const Redis = require('ioredis')
+const prettyMs = require('pretty-ms')
 const os = require('os')
-const create = require('lodash.create')
+const uuid = require('uuid/v4')
 const logger = require('pino')({
   name: path.basename(__filename)
 })
 
-const statuses = {
-  isPendingScaleDown: {
-    status: false,
-    since: new Date()
-  },
-  isPendingScaleUp: {
-    status: false,
-    since: new Date()
-  },
-  lastScaleDownTime: new Date(),
-  lastScaleUpTime: new Date()
+// internals
+const Watcher = require('./lib/watcher')
+const JobQueue = require('./lib/job')
+const Kube = require('./lib/kube')
+
+// lodash shim to make it easier to understand what's going on here.
+const _ = {
+  create: require('lodash.create')
 }
 
-const printStatus = () => {
-  const scaleDown = statuses.isPendingScaleDown.status
-  const scaleUp = statuses.isPendingScaleUp.status
+const jobQueue = new JobQueue()
+const printStatus = async () => {
+  const pendingJobs = await jobQueue.list()
+  for (const op of pendingJobs) {
+    const w = watcherTable.get(op.data.watcher)
+    const deployment = w.deployment
 
-  const child = logger.child({
-    scaleDown: scaleDown,
-    scaleUp: scaleUp
-  })
+    const now = new Date()
+    const diff = now.valueOf() - op.created_at.valueOf()
 
-  child.info(`autoscale status report`)
+    logger.info(`Operation '${op.data.op}' deployment '${deployment}' has been pending for ${prettyMs(diff)} (${op.created_at.toISOString()})`)
+  }
 }
 
 const metricsDb = dyn('redis') + '/1'
 logger.info('metrics is at', metricsDb)
 const metrics = new Redis(metricsDb)
 
-// FIXME: convert to CRD some day
-const deploymentName = 'triton-converter'
-const jobType = 'convert'
+/* eslint no-unused-vars: 0 */
+const WatcherData = {
+  deploymentName: '',
+  jobType: ''
+}
+
+/**
+ * @type {Map<String, Watcher>}
+ */
+const watcherTable = new Map()
 
 /**
  * Publish the status to the metrics pubsub
@@ -63,143 +70,113 @@ const jobType = 'convert'
  * @returns {Promise}
  */
 const publishStatus = async status => {
-  const event = create({
+  const event = _.create({
     host: os.hostname()
   }, status)
   return metrics.publish('events', JSON.stringify(event))
 }
 
+/**
+ * Creates and manages a queue watcher
+ * @param {WatcherData} w watcher to setup
+ * @param {Kube} kube kubernetes client
+ * @param {kue.Queue} queue kue queue object
+ * @param {JobQueue} jobQueue job queue
+ * @returns {String} watcherId
+ */
+const createWatcher = async function (w, kube, queue) {
+  const watcher = new Watcher(w.jobType, w.deploymentName, queue, jobQueue, kube)
+  watcher.start()
+  watcherTable.set(watcher.id, watcher)
+
+  return watcher.id
+}
+
 const init = async () => {
   const config = await Config('events')
-  const emitter = new events.EventEmitter()
   const queue = kue.createQueue({
     redis: dyn('redis')
   })
 
-  const kube = await require('./lib/kube')(config)
-  const watcher = require('./lib/watcher').watcher(queue, jobType, emitter)
+  logger.info('loading kubespec')
+  const kube = await Kube(config)
 
-  // check every 5 seconds
-  setInterval(async function () {
-    watcher()
+  /**
+   * Operations to be run on events.
+   */
+  const ops = {
+    scaleUp: async function (data) {
+      logger.info(`executing scaleUp on '%o'`, data)
 
-    // 10 minutes
-    const scaleTime = (1000 * 60) * 5
-    const now = new Date()
+      const watcher = watcherTable.get(data.watcher)
+      const deployment = watcher.deployment
 
-    // scale up
-    if (statuses.isPendingScaleUp.status && !statuses.isPendingScaleDown.status) {
-      const diff = now.valueOf() - statuses.isPendingScaleUp.since.valueOf()
-
-      if (diff > scaleTime) {
-        logger.info('triggered scale up')
-
-        const canScale = await kube.canScale(deploymentName)
-        if (!canScale) {
-          logger.warn('Unable to scale up due to pending, or uavailable pods being present.')
-          return printStatus()
-        }
-
-        try {
-          await kube.scaleUp(deploymentName)
-          publishStatus({
-            event: 'scaleUp'
-          })
-          statuses.isPendingScaleUp.status = false
-          statuses.lastScaleUpTime = new Date()
-        } catch (err) {
-          logger.error('failed to scale up, requeue.')
-        }
-      }
-    }
-
-    // scale down
-    if (statuses.isPendingScaleDown.status && !statuses.isPendingScaleUp.status) {
-      const diff = now.valueOf() - statuses.isPendingScaleDown.since.valueOf()
-
-      if (diff > scaleTime) {
-        logger.info('triggered scale down')
-
-        try {
-          await kube.scaleDown(deploymentName)
-          publishStatus({
-            event: 'scaleDown'
-          })
-          statuses.isPendingScaleDown.status = false
-          statuses.lastScaleDownTime = new Date()
-        } catch (err) {
-          logger.error('failed to scale down, requeue.')
-        }
-      }
-    }
-
-    printStatus()
-  }, 5000)
-
-  // add to the 'waiting' object
-  emitter.on('inactive', async inactive => {
-    const inactiveJobs = inactive.length
-    const canScale = await kube.canScale(deploymentName)
-    if (inactiveJobs !== 0 && canScale) {
-      logger.info(inactiveJobs, 'job(s) have been pending since', statuses.isPendingScaleUp.since.toISOString())
-
-      if (!statuses.isPendingScaleUp.status) {
-        publishStatus({
-          event: 'scaleUpPending',
-          cause: inactive
-        })
-
-        statuses.isPendingScaleUp.status = true
-        statuses.isPendingScaleUp.since = new Date()
-      }
-    } else if (statuses.isPendingScaleUp.status) {
+      await kube.scaleUp(deployment)
       publishStatus({
-        event: 'scaleUpCanceled'
+        event: 'scaleUp'
       })
-      logger.debug('canceled scaleUp, if there was one present')
+    },
+    scaleDown: async function (data) {
+      logger.info(`executing scaleDown on '%o'`, data)
 
-      statuses.isPendingScaleUp.status = false
+      const watcher = watcherTable.get(data.watcher)
+      const deployment = watcher.deployment
+
+      await kube.scaleDown(deployment)
+      publishStatus({
+        event: 'scaleDown'
+      })
+    }
+  }
+
+  const poll = async function () {
+    const jobs = await jobQueue.ready()
+    for (const job of jobs) {
+      if (!ops[job.data.op]) {
+        logger.warn('failed to execute job:', job.data.op, 'on watcher', job.data.watcher)
+      }
+
+      await ops[job.data.op](job.data)
+      await jobQueue.finish(job.id)
     }
 
-    logger.debug(`inactive=${inactiveJobs}`)
+    await printStatus()
+  }
+
+  // check every 20 seconds
+  setInterval(poll, 1000 * 20)
+
+  /**
+   * @type Map<String, String>
+   */
+  const k8swatcherToUUID = new Map()
+  const k8sevents = kube.watchWatchers()
+  k8sevents.on('created', async item => {
+    const { name, namespace } = item.object.metadata
+    logger.info('on::create:getWatcher(): \'%s\' in namespace \'%s\'', name, namespace)
+    const w = await kube.getWatcher(name, namespace)
+    if (!w.spec || !w.spec.deploymentName || !w.spec.jobType) {
+      logger.warn('Skipping invalid watcher', w.metadata.name)
+    }
+    const watcherId = await createWatcher(w.spec, kube, queue)
+    logger.info(`created watcher '${watcherId}' from '%o'`, w.spec)
+    k8swatcherToUUID.set(`${name}:${namespace}`, watcherId)
   })
-
-  emitter.on('active', async active => {
-    const activeJobs = active.length
-    // process new stuff
-    const replicas = await kube.getReplicas(deploymentName)
-    if (replicas > activeJobs) {
-      logger.debug('there are more replicas than active jobs, scaleDown')
-
-      if (!statuses.isPendingScaleDown.status) {
-        publishStatus({
-          event: 'scaleDownPending',
-          cause: active
-        })
-        statuses.isPendingScaleDown.status = true
-        statuses.isPendingScaleDown.since = new Date()
-      }
-
-      logger.info(replicas - activeJobs, 'replica(s) are uneeded since', statuses.isPendingScaleDown.since.toISOString())
-    } else if (statuses.isPendingScaleDown.status) {
-      publishStatus({
-        event: 'scaleDownCanceled'
-      })
-      logger.debug('canceled scaleDown, if there was one present')
-
-      statuses.isPendingScaleDown.status = false
-    }
-
-    logger.debug(`replicas=${replicas}, active=${activeJobs}`)
+  k8sevents.on('removed', async item => {
+    const { name, namespace } = item.object.metadata
+    const watcherId = k8swatcherToUUID.get(`${name}:${namespace}`)
+    logger.info(`removed watcher %s (ID: %s)`, `${name}:${namespace}`, watcherId)
+    const watcher = watcherTable.get(watcherId)
+    await watcher.terminate()
+    watcherTable.delete(watcherId)
   })
 
   queue.watchStuckJobs()
+  jobQueue.startWatcher()
 
   logger.info('initialized')
-}
 
-if (process.env.DEBUG) {
-  logger.level = 'debug'
+  poll()
 }
 
 init()

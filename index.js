@@ -132,8 +132,6 @@ const init = async () => {
   const poll = async function () {
     const jobs = await jobQueue.ready()
     for (const job of jobs) {
-      console.log(job.data)
-
       if (!ops[job.data.op]) {
         logger.warn('failed to execute job:', job.data.op, 'on watcher', job.data.watcher)
       }

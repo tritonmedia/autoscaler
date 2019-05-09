@@ -85,40 +85,8 @@ const publishStatus = async status => {
  * @returns {String} watcherId
  */
 const createWatcher = async function (w, kube, queue) {
-  const watcher = new Watcher(w.jobType, w.deploymentName, queue)
-
-  let wlog = logger.child({
-    queue: w.jobType,
-    deplyment: w.deploymentName
-  })
-
-  // add to the 'waiting' object
-  watcher.on('inactive', async inactive => {
-    const inactiveJobs = inactive.length
-    const canScale = await kube.canScale(w.deploymentName)
-    if (inactiveJobs !== 0 && canScale) {
-      await jobQueue.create({
-        op: 'scaleUp',
-        watcher: watcher.id,
-        queue: w.jobType
-      })
-    }
-  })
-
-  watcher.on('active', async active => {
-    const activeJobs = active.length
-    const replicas = await kube.getReplicas(w.deploymentName)
-    if (replicas > activeJobs) {
-      await jobQueue.create({
-        op: 'scaleDown',
-        watcher: watcher.id,
-        queue: w.jobType
-      })
-    }
-  })
-
+  const watcher = new Watcher(w.jobType, w.deploymentName, queue, jobQueue, kube)
   watcher.start()
-
   watcherTable.set(watcher.id, watcher)
 
   return watcher.id

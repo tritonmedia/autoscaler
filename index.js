@@ -180,14 +180,30 @@ const init = async () => {
   // check every 20 seconds
   setInterval(poll, 1000 * 20)
 
-  const k8sWatchers = await kube._client.apis['tritonjs.com'].v1.namespaces('default').autoscalerwatchers.get()
-  for (const w of k8sWatchers.body.items) {
+  /**
+   * @type Map<String, String>
+   */
+  const k8swatcherToUUID = new Map()
+  const k8sevents = kube.watchWatchers()
+  k8sevents.on('created', async item => {
+    const { name, namespace } = item.object.metadata
+    logger.info('on::create:getWatcher(): \'%s\' in namespace \'%s\'', name, namespace)
+    const w = await kube.getWatcher(name, namespace)
     if (!w.spec || !w.spec.deploymentName || !w.spec.jobType) {
       logger.warn('Skipping invalid watcher', w.metadata.name)
     }
     const watcherId = await createWatcher(w.spec, kube, queue)
     logger.info(`created watcher '${watcherId}' from '%o'`, w.spec)
-  }
+    k8swatcherToUUID.set(`${name}:${namespace}`, watcherId)
+  })
+  k8sevents.on('removed', async item => {
+    const { name, namespace } = item.object.metadata
+    const watcherId = k8swatcherToUUID.get(`${name}:${namespace}`)
+    logger.info(`removed watcher %s (ID: %s)`, `${name}:${namespace}`, watcherId)
+    const watcher = watcherTable.get(watcherId)
+    await watcher.terminate()
+    watcherTable.delete(watcherId)
+  })
 
   queue.watchStuckJobs()
   jobQueue.startWatcher()

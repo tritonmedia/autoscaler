@@ -1,0 +1,11 @@
+# installed by the dockerfile
+node_modules
+
+# used by integration tests
+.images
+.charts
+
+# not needed
+test
+Makefile
+docker-compose.yaml

@@ -1,0 +1,139 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: autoscaler
+  labels:
+    app: autoscaler
+    release: test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: autoscaler
+      release: test
+  template:
+    metadata:
+      labels:
+        app: autoscaler
+        release: test
+    spec:
+      serviceAccountName: autoscaler
+      volumes:
+        - name: config
+          secret:
+            secretName: media-config
+      containers:
+        - name: autoscaler
+          image: autoscaler:canary
+          imagePullPolicy: Never
+          command: [ "/usr/bin/docker-entrypoint", "autoscaler" ]
+          env:
+            - name: NODE_ENV
+              value: production
+          volumeMounts:
+            - name: config
+              mountPath: "/mnt/config"
+          resources:
+            requests:
+              cpu: 200m
+              memory: 500Mi
+            limits: {}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: autoscaler
+  namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: Role
+metadata:
+  name: autoscaler
+rules:
+- apiGroups: ["apps"]
+  resources:
+  - deployments
+  verbs: ["get", "list", "watch", "post", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  name: autoscaler
+rules:
+- apiGroups: ["tritonjs.com"]
+  resources:
+  - autoscalerwatchers
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: autoscaler
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: autoscaler
+subjects:
+  - kind: ServiceAccount
+    name: autoscaler
+    namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: RoleBinding
+metadata:
+  name: autoscaler
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: autoscaler
+subjects:
+  - kind: ServiceAccount
+    name: autoscaler
+    namespace: default
+---
+apiVersion: v1
+data:
+  config.yaml: cHJvZHVjdGlvbjoKICBrZXlzOgogICAgdHJlbGxvOgogICAgICB0b2tlbjogIiIKICAgICAga2V5OiAiIgogICAgbWluaW86CiAgICAgIGFjY2Vzc0tleTogIiIKICAgICAgc2VjcmV0S2V5OiAiIgogIGluc3RhbmNlczoKICAgIGRlZmF1bHQ6CiAgICAgIGhvc3Q6ICcxMjcuMC4wLjEnCiAgICBtZWRpYToKICAgICAgbG9jYXRpb246ICcuL3Byb2R1Y3Rpb24nCiAgICAgIHR5cGVzOgogICAgICAgIG1vdmllOiAnL21vdmllcycKICAgICAgICB0djogJy90dicKICAgIGNvbnZlcnRlcjoKICAgICAgZG93bmxvYWRfcGF0aDogJy9tbnQvZG93bmxvYWRpbmcnCiAgICAgIHRyYW5zY29kaW5nX3BhdGg6ICcvbW50L3RyYW5zY29kaW5nJwogICAgICBlbmNvZGVyOiAnaGFuZGJyYWtlJwogICAgICBzZXR0aW5nczoKICAgICAgICB2aWRlbzoKICAgICAgICAgIGNvZGVjOiAneDI2NCcKICAgICAgICAgIHByb2ZpbGU6ICdoaWdoJwogICAgICAgICAgcHJlc2V0OiAndmVyeWZhc3QnCiAgICAgICAgICB0dW5lOiAnYW5pbWF0aW9uJwogICAgICAgICAgcXVhbGl0eTogMTYKICAgICAgICBhdWRpbzoKICAgICAgICAgIGNvZGVjOiAnY29weTpmbGFjJwogICAgICAgICAgZmFsbGJhY2s6ICdmbGFjMTYnCiAgICAgICAgICBtaXhkb3duOiAnZHBsMicKICAgICAgICBzdWJ0aXRsZXM6CiAgICAgICAgICBjb2RlYzogJ2NvcHknCiAgICAgICAgICBzdHJpcF9waWN0dXJlczogdHJ1ZQogICAgICBlbmFibGVkOiB0cnVlCiAgICBtZXRyaWNzOgogICAgICBwb3J0OiAyMDAwCiAgICAgIHR5cGU6ICdhbGwnCiAgICBldmVudHM6CiAgICAgICMgTm9uLXNob3J0IElEOiA1YTY1MTMzYTRjNDdmNjM4Y2Q0ZmYxZTgKICAgICAgYm9hcmQ6IHZJR0gwSWlMCiAgICAgIHdlYmhvb2s6IGh0dHBzOi8vYXBwLnRyaXRvbmpzLmNvbS93ZWJob29rCiAgICAgIGZsb3dfaWRzOgogICAgICAgIHJlcXVlc3RzOiA1YTY1MTMzYTRjNDdmNjM4Y2Q0ZmYxZTkKICAgICAgICByZWFkeTogNWE2NTE0NDUzNTJjZjBiOTBmMTQ5ZGYzCiAgICAgICAgZG93bmxvYWRpbmc6IDVhNjUxMzNhNGM0N2Y2MzhjZDRmZjFlYQogICAgICAgIHByb2Nlc3Npbmc6IDVhNjUxMzNhNGM0N2Y2MzhjZDRmZjFlYgogICAgICAgIGNvbXBsZXRlOiA1YTY1NzgxN2ZkNWIyMDBiYTk4ZmQ0NGIKICAgICAgICBzdGFnaW5nOiA1YTkxZDUxYjUyYzJiNmI0OTE4MDA0NGQKICAgICAgICBkZXBsb3llZDogNWE2NTEzNjdjNWJlMjQ5MzlkNjg5YzE5CiAgICAgICAgZXJyb3I6IDVhNjUxMzNhNGM0N2Y2MzhjZDRmZjFlOQogICAgICBsYWJlbHM6CiAgICAgICAgbWV0YWRhdGE6IDVhNjUxMzNhOWFlM2Q2MGIwY2VjOTA4ZgogICAgICAgIGVycm9yOiA1YTZjZTFmMzNhZDI0OTZmZWZkODEyOWEKICAgICAgICBtb3ZpZTogNWE2NTEzM2E5YWUzZDYwYjBjZWM5MDkwCiAgICAgIGNvcHlfY2hlY2tsaXN0czogdHJ1ZQo=
+kind: Secret
+metadata:
+  name: media-config
+  namespace: default
+type: Opaque
+---
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: triton-converter
+spec:
+  replicas: 0
+  selector:
+    matchLabels:
+      app: triton-converter
+  template:
+    metadata:
+      labels:
+        app: triton-converter
+    spec:
+      containers:
+      - name: downloader
+        image: k8s.gcr.io/pause:3.1
+        imagePullPolicy: Never
+---
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: triton-downloader
+spec:
+  replicas: 0
+  selector:
+    matchLabels:
+      app: triton-downloader
+  template:
+    metadata:
+      labels:
+        app: triton-downloader
+    spec:
+      containers:
+      - name: downloader
+        image: k8s.gcr.io/pause:3.1
+        imagePullPolicy: Never

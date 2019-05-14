@@ -48,4 +48,8 @@ tests-integration: setup-integration-tests build-docker
 	@echo " --> Setting up Kubernetes"
 	@docker exec autoscaler_server_1 cat -- /output/kubeconfig.yaml > /tmp/kubeconfig.yaml
 	KUBECONFIG="/tmp/kubeconfig.yaml" $(PWD)/hack/setup-k8s.sh
-	KUBECONFIG="/tmp/kubeconfig.yaml" yarn test
+	@echo " --> Waiting for services to be up (20s)"
+	@sleep 20
+	KUBECONFIG="/tmp/kubeconfig.yaml" "$(PWD)/hack/setup-local.sh" &
+	sleep 3
+	KUBECONFIG="/tmp/kubeconfig.yaml" yarn test-integration

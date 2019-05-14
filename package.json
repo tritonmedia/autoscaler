@@ -8,7 +8,8 @@
   "license": "MIT",
   "private": false,
   "scripts": {
-    "test": "mocha test/unit/**/*.js test/integration/*.js test/*.js --exit"
+    "test": "mocha test/unit/**/*.js test/*.js --exit",
+    "test-integration": "mocha test/integration/*.js --exit --timeout 20m"
   },
   "dependencies": {
     "fecha": "^3.0.3",
@@ -18,6 +19,7 @@
     "kubernetes-client": "^7.0.1",
     "kue": "^0.11.6",
     "lodash": "^4.17.11",
+    "lodash.clonedeep": "^4.5.0",
     "lodash.create": "^4.2.0",
     "lodash.defaults": "^4.2.0",
     "lodash.find": "^4.6.0",

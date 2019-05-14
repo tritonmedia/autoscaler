@@ -32,4 +32,5 @@ rm "$tmp_install"
 
 echo " -> Deploying the autoscaler"
 kubectl apply -f ./deploy/crd.yaml
+kubectl apply -f ./deploy/example.yaml
 kubectl apply -f ./test/integration/testdata/deployment.yaml

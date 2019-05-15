@@ -31,6 +31,9 @@ jobs:
           sudo sh -c "wget -q https://storage.googleapis.com/kubernetes-helm/helm-${HELM_VERSION}-linux-amd64.tar.gz -O - | tar -xzO linux-amd64/helm > /usr/local/bin/helm"
           sudo chmod +x /usr/local/bin/helm
 
+          # update ancient docker-compose
+          sudo curl -L "https://github.com/docker/compose/releases/download/1.24.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/bin/docker-compose
+
           # fix apt-get update
           wget -q -O - https://packagecloud.io/circleci/trusty/gpgkey | sudo apt-key add -
           wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -

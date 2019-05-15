@@ -9,8 +9,30 @@ jobs:
           name: Run Tests
           command: |
             set -e
-            yarn --production=false
+            yarn --production=false --frozen-lockfile
             yarn test
+  test-integration:
+    docker:
+    - image: jaredallard/triton-base
+    steps:
+    - checkout
+    - run:
+        name: Install Dependencies
+        command: |
+          set -e
+          apk add --no-cache make ca-certificates bash git openssh curl
+          export KUBE_LATEST_VERSION="v1.13.4"
+          export HELM_VERSION="v2.13.1"
+          wget -q https://storage.googleapis.com/kubernetes-release/release/${KUBE_LATEST_VERSION}/bin/linux/amd64/kubectl -O /usr/local/bin/kubectl
+          chmod +x /usr/local/bin/kubectl
+          wget -q https://storage.googleapis.com/kubernetes-helm/helm-${HELM_VERSION}-linux-amd64.tar.gz -O - | tar -xzO linux-amd64/helm > /usr/local/bin/helm
+          chmod +x /usr/local/bin/helm
+    - run:
+        name: Run Integration Tests (may take awhile)
+        command: |
+          set -e
+          yarn --production=false --frozen-lockfile
+          yarn test-integration
   build-push:
     docker:
       - image: docker:18.06.1-ce
@@ -43,10 +65,12 @@ workflows:
   build-test-push:
     jobs:
       - test
+      - test-integration
       - build-push:
           context: Docker
           requires:
-            - test
+          - test
+          - test-integration
           filters:
             branches:
               only:

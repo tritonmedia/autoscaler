@@ -48,7 +48,8 @@ tests-integration: setup-integration-tests build-docker
 	@echo ""
 	@echo " ==> Exporting Docker Images for kubernetes <=="
 	@mkdir -p "$(PWD)/.images"
-	docker pull redis:alpine gcr.io/kubernetes-helm/tiller:v2.13.1 || echo "Failed to pull, optimistically assuming on local machine"
+	@docker pull redis:alpine || echo "Failed to pull (redis) container image, optimistically assuming on local machine"
+	@docker pull gcr.io/kubernetes-helm/tiller:v2.13.1 || echo "Failed to pull (helm) container image, optimistically assuming on local machine"
 	docker save autoscaler:canary redis:alpine gcr.io/kubernetes-helm/tiller:v2.13.1 -o "$(PWD)/.images/images.tar"
 	@echo " --> Creating local kubernetes cluster"
 	@docker-compose down >/dev/null 2>&1|| true 

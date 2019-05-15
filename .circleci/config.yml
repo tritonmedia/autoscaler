@@ -32,7 +32,8 @@ jobs:
           sudo chmod +x /usr/local/bin/helm
 
           # fix apt-get update
-          apt-key adv --keyserver pgp.mit.edu --recv-keys 6494C6D6997C215E 4E6910DFCB68C9CD
+          wget -q -O - https://packagecloud.io/circleci/trusty/gpgkey | sudo apt-key add -
+          wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
 
           # Install node.js
           curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -

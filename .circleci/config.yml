@@ -12,19 +12,14 @@ jobs:
             yarn --production=false --frozen-lockfile
             yarn test
   test-integration:
-    docker:
-    - image: jaredallard/triton-base
+    # We use machine mode so that we can access k8s locally
+    machine: true
     steps:
     - checkout
-    - setup_remote_docker
     - run:
         name: Install Dependencies
         command: |
           set -e
-
-          # Install deps
-          apk add --no-cache make ca-certificates bash git openssh curl docker python-dev libffi-dev openssl-dev gcc libc-dev make py-pip
-          pip install docker-compose
 
           # Kubectl and Helm version
           export KUBE_LATEST_VERSION="v1.13.4"
@@ -47,6 +42,7 @@ jobs:
           set -e
           yarn --production=false --frozen-lockfile
           make tests-integration
+
   build-push:
     docker:
       - image: docker:18.06.1-ce

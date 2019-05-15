@@ -39,7 +39,7 @@ build-docker: check-docker
 	@echo ""
 	@echo " ==> Building Docker Image <=="
 	@echo ""
-	@docker build -t autoscaler:canary -f .circleci/Dockerfile .
+	@DOCKER_BUILDKIT=1 docker build -t autoscaler:canary -f .circleci/Dockerfile .
 
 .PHONY: tests-integration
 tests-integration: setup-integration-tests build-docker

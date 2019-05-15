@@ -31,11 +31,14 @@ jobs:
           sudo sh -c "wget -q https://storage.googleapis.com/kubernetes-helm/helm-${HELM_VERSION}-linux-amd64.tar.gz -O - | tar -xzO linux-amd64/helm > /usr/local/bin/helm"
           sudo chmod +x /usr/local/bin/helm
 
+          # fix apt-get update
+          apt-key adv --keyserver pgp.mit.edu --recv-keys 6494C6D6997C215E 4E6910DFCB68C9CD
+
           # Install node.js
           curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
           echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
-          sudo apt-get update || true # circleci fails on update sometimes, but we good
-          sudo apt-get install yarn
+          curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -
+          sudo apt-get install -y nodejs yarn
 
           # debug
           echo "Version Information: (docker, helm, kubectl)"

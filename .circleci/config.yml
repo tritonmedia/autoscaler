@@ -59,6 +59,8 @@ jobs:
         name: Run Integration Tests (may take awhile)
         command: |
           set -e
+          export NVM_DIR="$HOME/.nvm"
+          source "$NVM_DIR/nvm.sh"  # This loads nvm
           yarn --production=false --frozen-lockfile
           make tests-integration
 

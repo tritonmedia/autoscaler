@@ -1,0 +1,8 @@
+apiVersion: tritonjs.com/v1
+kind: AutoScalerWatcher
+metadata:
+  name: triton-converter
+spec:
+  deploymentName: triton-converter
+  jobType: convert
+  pendingTimeMinutes: 1

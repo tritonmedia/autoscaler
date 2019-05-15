@@ -28,7 +28,7 @@ jobs:
           # Install kubectl & helm
           sudo wget -q https://storage.googleapis.com/kubernetes-release/release/${KUBE_LATEST_VERSION}/bin/linux/amd64/kubectl -O /usr/local/bin/kubectl
           sudo chmod +x /usr/local/bin/kubectl
-          sudo wget -q https://storage.googleapis.com/kubernetes-helm/helm-${HELM_VERSION}-linux-amd64.tar.gz -O - | tar -xzO linux-amd64/helm > /usr/local/bin/helm
+          sudo sh -c "wget -q https://storage.googleapis.com/kubernetes-helm/helm-${HELM_VERSION}-linux-amd64.tar.gz -O - | tar -xzO linux-amd64/helm > /usr/local/bin/helm"
           sudo chmod +x /usr/local/bin/helm
 
           # debug

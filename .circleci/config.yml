@@ -20,7 +20,7 @@ jobs:
         name: Install Dependencies
         command: |
           set -e
-          apk add --no-cache make ca-certificates bash git openssh curl
+          apk add --no-cache make ca-certificates bash git openssh curl docker
           export KUBE_LATEST_VERSION="v1.13.4"
           export HELM_VERSION="v2.13.1"
           wget -q https://storage.googleapis.com/kubernetes-release/release/${KUBE_LATEST_VERSION}/bin/linux/amd64/kubectl -O /usr/local/bin/kubectl

@@ -38,6 +38,7 @@ jobs:
           # Install node.js
           curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
           echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+          sudo killall -9 apt-get || true
           sudo apt-get update
 
           # ok: https://discuss.circleci.com/t/nvm-installation-not-working-due-to-bashrc-not-working/17580

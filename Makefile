@@ -57,7 +57,7 @@ tests-integration: setup-integration-tests build-docker
 	@echo " --> Waiting for Kubernetes (60s) "
 	@sleep 60
 	@echo " --> Setting up Kubernetes"
-	@docker exec autoscaler_server_1 cat -- /output/kubeconfig.yaml > /tmp/kubeconfig.yaml
+	@$(PWD)/hack/get-kube-config.sh > /tmp/kubeconfig.yaml
 	KUBECONFIG="/tmp/kubeconfig.yaml" $(PWD)/hack/setup-k8s.sh
 	@echo " --> Waiting for services to be up (20s)"
 	@sleep 20

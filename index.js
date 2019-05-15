@@ -52,7 +52,8 @@ const metrics = new Redis(metricsDb)
 /* eslint no-unused-vars: 0 */
 const WatcherData = {
   deploymentName: '',
-  jobType: ''
+  jobType: '',
+  pendingTimeMinutes: 10
 }
 
 /**
@@ -85,7 +86,7 @@ const publishStatus = async status => {
  * @returns {String} watcherId
  */
 const createWatcher = async function (w, kube, queue) {
-  const watcher = new Watcher(w.jobType, w.deploymentName, queue, jobQueue, kube)
+  const watcher = new Watcher(w.jobType, w.deploymentName, queue, w.pendingTimeMinutes, jobQueue, kube)
   watcher.start()
   watcherTable.set(watcher.id, watcher)
 

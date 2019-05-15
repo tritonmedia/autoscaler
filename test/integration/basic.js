@@ -99,18 +99,19 @@ describe('Integration', async () => {
     return cleanup(client)
   })
 
-  it('should scale up a deployment when a job is present after 10 minutes', async () => {
+  // This tests basic functionality as well as that pendingTimeMinutes works
+  it('should scale up a deployment when a job is present after 1 minute (set in CRD resource)', async () => {
     const client = await getClient()
     await createJob('convert')
 
-    // wait for five minutes
-    await wait(300000)
+    // wait for half a minute
+    await wait(1000 * 30)
 
     let deployment = await client.apis.apps.v1.namespaces('default').deployments('triton-converter').get()
     assert.strictEqual(deployment.body.spec.replicas, 0)
 
-    // wait for 6 minutes to be safe
-    await wait(360000)
+    // wait for 70 seconds to be safe
+    await wait(1000 * 70)
 
     deployment = await client.apis.apps.v1.namespaces('default').deployments('triton-converter').get()
     assert.strictEqual(deployment.body.spec.replicas, 1)

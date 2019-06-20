@@ -12,6 +12,7 @@
     "test-integration": "mocha test/integration/*.js --exit --timeout 20m"
   },
   "dependencies": {
+    "amqp-connection-manager": "^2.3.2",
     "amqplib": "^0.5.3",
     "fecha": "^3.0.3",
     "ioredis": "^4.9.3",

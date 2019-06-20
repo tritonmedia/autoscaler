@@ -1,12 +1,39 @@
 HAS_DOCKER := $(shell command -v docker;)
 HAS_DOCKER_COMPOSE := $(shell command -v docker-compose;)
 HAS_YARN := $(shell command -v yarn;)
+HAS_NODE := $(shell command -v node;)
+HAS_KUBECTL := $(shell command -v kubectl;)
+HAS_HELM := $(shell command -v helm;)
 PWD := $(shell pwd;)
 
 .PHONY: check-docker
 check-docker:
 ifndef HAS_DOCKER
 	@echo "Missing docker"
+	@exit 1
+endif
+	@true
+
+.PHONY: check-kubectl
+check-kubectl:
+ifndef HAS_KUBECTL
+	@echo "Missing kubectl"
+	@exit 1
+endif
+	@true
+
+.PHONY: check-node
+check-node:
+ifndef HAS_NODE
+	@echo "Missing node"
+	@exit 1
+endif
+	@true
+
+.PHONY: check-helm
+check-helm:
+ifndef HAS_HELM
+	@echo "Missing helm"
 	@exit 1
 endif
 	@true
@@ -20,7 +47,7 @@ endif
 	@true
 
 .PHONY: check-yarn
-check-yarn:
+check-yarn: check-node
 ifndef HAS_YARN
 	@echo "Missing yarn"
 	@exit 1
@@ -32,14 +59,14 @@ setup-env:
 	@$(PWD)/hack/setup-env.sh
 
 .PHONY: setup-integration-tests
-setup-integration-tests: check-docker check-docker-compose check-yarn
+setup-integration-tests: check-docker check-docker-compose check-yarn check-kubectl check-helm
 
 .PHONY: build-docker
 build-docker: check-docker
 	@echo ""
 	@echo " ==> Building Docker Image <=="
 	@echo ""
-	@DOCKER_BUILDKIT=1 docker build -t autoscaler:canary -f .circleci/Dockerfile .
+	@docker build -t autoscaler:canary -f .circleci/Dockerfile .
 
 .PHONY: tests-integration
 tests-integration: setup-integration-tests build-docker

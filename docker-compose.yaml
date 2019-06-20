@@ -35,3 +35,9 @@ services:
     environment:
     - K3S_URL=https://server:6443
     - K3S_CLUSTER_SECRET=somethingtotallyrandom
+  
+  ## FOR LOCAL DEVELOPMENT ##
+  rabbitmq:
+    image: bitnami/rabbitmq
+    ports:
+      - '15672:15672'

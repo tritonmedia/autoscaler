@@ -94,10 +94,7 @@ const wait = (ms = 1000) => {
 
 /* eslint no-undef: 0 */
 describe('Integration', async () => {
-  afterEach(async () => {
-    const client = await getClient()
-    return cleanup(client)
-  })
+  afterEach(async () => cleanup(await getClient()))
 
   // This tests basic functionality as well as that pendingTimeMinutes works
   it('should scale up a deployment when a job is present after 1 minute (set in CRD resource)', async () => {

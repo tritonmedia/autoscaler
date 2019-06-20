@@ -12,6 +12,7 @@
     "test-integration": "mocha test/integration/*.js --exit --timeout 20m"
   },
   "dependencies": {
+    "amqplib": "^0.5.3",
     "fecha": "^3.0.3",
     "ioredis": "^4.9.3",
     "js-yaml": "^3.13.1",
@@ -25,6 +26,7 @@
     "lodash.find": "^4.6.0",
     "pino": "^5.12.3",
     "pretty-ms": "^5.0.0",
+    "protobufjs": "^6.8.8",
     "triton-core": "^1.6.0",
     "uuid": "^3.3.2"
   },

@@ -1,0 +1,14 @@
+package api;
+
+syntax = "proto3";
+
+message v1.telemetry.error {
+  // id for this error
+  string id = 0;
+
+  // mediaId this error correlates too
+  string mediaId = 1;
+
+  // error message
+  string message = 2;
+}

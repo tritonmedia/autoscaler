@@ -1,0 +1,14 @@
+package api;
+
+syntax = "proto3";
+
+// media definitions
+import "v1.media.proto";
+
+message v1.convert {
+  // when this job was created
+  string created_at = 1;
+
+  // media is the media we need to convert
+  v1.media media = 2;
+}

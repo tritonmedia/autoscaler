@@ -2,13 +2,13 @@ package api;
 
 syntax = "proto3";
 
-message v1.telemetry.error {
+message TelemetryError {
   // id for this error
-  string id = 0;
+  required string id = 0;
 
   // mediaId this error correlates too
-  string mediaId = 1;
+  optional string mediaId = 1;
 
   // error message
-  string message = 2;
+  required string message = 2;
 }

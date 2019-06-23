@@ -3,20 +3,20 @@ package api;
 syntax = "proto3";
 
 // v1.media represents v1 of the media card
-message v1.media {
+message Media {
   // id of this media
-  string id = 1;
+  required string id = 1;
   // name of the media
-  string name = 2;
+  required string name = 2;
 
   // CreatorType is where this media came from (where it was requested)
   enum CreatorType {
     TRELLO = 0;
     TWILIO = 1;
   }
-  CreatorType creator = 3;
+  required CreatorType creator = 3;
   // ID that correlates to creator, if needed
-  string creatorId = 4;
+  optional string creatorId = 4;
   
   // type of the media
   enum MediaType {
@@ -24,7 +24,7 @@ message v1.media {
     TV = 1;
     MUSIC = 2;
   }
-  MediaType type = 5;
+  required MediaType type = 5;
 
   // SourceType is where this media came from
   enum SourceType {
@@ -32,6 +32,6 @@ message v1.media {
     TORRENT = 1;
     FILE = 2;
   }
-  SourceType source = 6;
-  string sourceURI = 7;
+  required SourceType source = 6;
+  required string sourceURI = 7;
 }

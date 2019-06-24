@@ -1,33 +1,20 @@
-const AMQP = require('../lib/amqp')
-const protobuf = require('protobufjs')
-const path = require('path')
+const AMQP = require('triton-core/amqp')
 const dyn = require('triton-core/dynamics')
+const proto = require('triton-core/proto')
 
-const a = new AMQP('amqp://user:bitnami@localhost')
-
-const loadProtobuf = async () => {
-  const root = await protobuf.load(path.join(__dirname, '../protos/api/v1.convert.proto'))
-  const convert = root.lookupType("api.Convert")
-  return convert
-}
+const a = new AMQP(dyn('rabbitmq'))
 
 const init = async () => {
-  const convert = await loadProtobuf()
+  const convert = await proto.load('api.Convert')
 
   await a.connect()
-  await a.listen('v1.media', msg => {
+  await a.listen('v1.media', function(msg) {
     try {
-      const engMsg = convert.decode(msg.message.content)
-      const content = convert.toObject(engMsg, {
-        enums: String,
-        bytes: String,
-        longs: String,
-      })
+      const content = proto.decode(convert, msg.message.content)
       console.log(content)
       msg.ack()
     } catch(err) {
-      logger.error('failed to read message')
-      logger.error(err)
+      console.log('failed to read message', err)
     }
   })
 

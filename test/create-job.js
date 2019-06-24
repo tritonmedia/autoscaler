@@ -1,8 +1,8 @@
-const AMQP = require('../lib/amqp')
-const path = require('path')
-const protobuf = require('protobufjs')
+const AMQP = require('triton-core/amqp')
+const dyn = require('triton-core/dynamics')
+const proto = require('triton-core/proto')
 
-const a = new AMQP('amqp://user:bitnami@localhost')
+const a = new AMQP(dyn('rabbitmq'))
 
 const wait = async(ms = 1000) => {
   return new Promise(resolve => {
@@ -10,16 +10,10 @@ const wait = async(ms = 1000) => {
   })
 }
 
-const loadProtobuf = async () => {
-  const root = await protobuf.load(path.join(__dirname, '../protos/api/v1.convert.proto'))
-  const convert = root.lookupType("api.Convert")
-  return convert
-}
-
 const init = async () => {
   await a.connect()
 
-  const convert = await loadProtobuf()
+  const convert = await proto.load('api.Convert')
 
   const payload = {
     createdAt: new Date().toISOString(),
@@ -34,11 +28,7 @@ const init = async () => {
     }
   }
 
-  const err = convert.verify(payload)
-  if (err) throw err
-
-  const msg = convert.create(payload)
-  const encoded = convert.encode(msg).finish()
+  const encoded = proto.encode(convert, payload)
 
   for (let i = 0; i !== 100000; i++) {
     await a.publish('v1.media', encoded)

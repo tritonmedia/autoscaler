@@ -3,7 +3,7 @@ const _ = require('lodash')
 
 const init = async () => {
   const bindings = await request({
-    uri: 'http://127.0.0.1:15672/api/bindings',
+    uri: 'http://triton-rabbitmq:15672/api/bindings',
     auth: {
       user: 'user',
       pass: 'bitnami'
@@ -21,7 +21,7 @@ const init = async () => {
 
   const knownQueuesHM = new Map()
   const knownQueues = await request({
-    uri: 'http://127.0.0.1:15672/api/queues',
+    uri: 'http://triton-rabbitmq:15672/api/queues',
     auth: {
       user: 'user',
       pass: 'bitnami'

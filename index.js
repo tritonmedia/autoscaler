@@ -10,10 +10,8 @@
 
 const dyn = require('triton-core/dynamics')
 const Config = require('triton-core/config')
-const kue = require('kue')
 const path = require('path')
 const events = require('events')
-const Redis = require('ioredis')
 const prettyMs = require('pretty-ms')
 const os = require('os')
 const uuid = require('uuid/v4')
@@ -45,10 +43,6 @@ const printStatus = async () => {
   }
 }
 
-const metricsDb = dyn('redis') + '/1'
-logger.info('metrics is at', metricsDb)
-const metrics = new Redis(metricsDb)
-
 /* eslint no-unused-vars: 0 */
 const WatcherData = {
   deploymentName: '',
@@ -71,22 +65,18 @@ const watcherTable = new Map()
  * @returns {Promise}
  */
 const publishStatus = async status => {
-  const event = _.create({
-    host: os.hostname()
-  }, status)
-  return metrics.publish('events', JSON.stringify(event))
+  return // NOOP
 }
 
 /**
  * Creates and manages a queue watcher
  * @param {WatcherData} w watcher to setup
  * @param {Kube} kube kubernetes client
- * @param {kue.Queue} queue kue queue object
  * @param {JobQueue} jobQueue job queue
  * @returns {String} watcherId
  */
-const createWatcher = async function (w, kube, queue) {
-  const watcher = new Watcher(w.jobType, w.deploymentName, queue, w.pendingTimeMinutes, jobQueue, kube)
+const createWatcher = async function (w, kube) {
+  const watcher = new Watcher(w.jobType, w.deploymentName, w.pendingTimeMinutes, jobQueue, kube)
   watcher.start()
   watcherTable.set(watcher.id, watcher)
 
@@ -95,9 +85,6 @@ const createWatcher = async function (w, kube, queue) {
 
 const init = async () => {
   const config = await Config('events')
-  const queue = kue.createQueue({
-    redis: dyn('redis')
-  })
 
   logger.info('loading kubespec')
   const kube = await Kube(config)
@@ -159,7 +146,7 @@ const init = async () => {
     if (!w.spec || !w.spec.deploymentName || !w.spec.jobType) {
       logger.warn('Skipping invalid watcher', w.metadata.name)
     }
-    const watcherId = await createWatcher(w.spec, kube, queue)
+    const watcherId = await createWatcher(w.spec, kube)
     logger.info(`created watcher '${watcherId}' from '%o'`, w.spec)
     k8swatcherToUUID.set(`${name}:${namespace}`, watcherId)
   })
@@ -172,7 +159,6 @@ const init = async () => {
     watcherTable.delete(watcherId)
   })
 
-  queue.watchStuckJobs()
   jobQueue.startWatcher()
 
   logger.info('initialized')

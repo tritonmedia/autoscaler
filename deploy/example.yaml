@@ -4,7 +4,7 @@ metadata:
   name: triton-downloader
 spec:
   deploymentName: triton-downloader
-  jobType: newMedia
+  jobType: v1.download
 ---
 apiVersion: tritonjs.com/v1
 kind: AutoScalerWatcher
@@ -12,4 +12,4 @@ metadata:
   name: triton-converter
 spec:
   deploymentName: triton-converter
-  jobType: convert
+  jobType: v1.convert

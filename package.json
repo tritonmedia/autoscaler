@@ -15,7 +15,7 @@
     "fecha": "^3.0.3",
     "js-yaml": "^3.13.1",
     "json-stream": "^1.0.0",
-    "kubernetes-client": "^8.2.1",
+    "kubernetes-client": "^8.3.1",
     "lodash": "^4.17.11",
     "lodash.clonedeep": "^4.5.0",
     "lodash.create": "^4.2.0",
@@ -25,15 +25,15 @@
     "pretty-ms": "^5.0.0",
     "request": "^2.88.0",
     "request-promise-native": "^1.0.7",
-    "triton-core": "^1.7.0",
+    "triton-core": "^1.11.0",
     "uuid": "^3.3.2"
   },
   "devDependencies": {
-    "eslint": "^6.0.0",
+    "eslint": "^6.0.1",
     "eslint-config-standard": "^12.0.0",
-    "eslint-plugin-import": "^2.17.3",
+    "eslint-plugin-import": "^2.18.0",
     "eslint-plugin-node": "^9.1.0",
-    "eslint-plugin-promise": "^4.1.1",
+    "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-standard": "^4.0.0",
     "mocha": "^6.1.4",
     "mocha-eslint": "^5.0.0"

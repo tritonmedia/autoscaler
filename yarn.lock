@@ -39,9 +39,9 @@
     ws "^6.1.0"
 
 "@panva/jose@^1.3.0":
-  version "1.3.0"
-  resolved "https://registry.yarnpkg.com/@panva/jose/-/jose-1.3.0.tgz#9ab40059bb1511546f7ceea5beec0c32673f7ca5"
-  integrity sha512-2comC1FjCLxSW7TdEOWt6HFSVjWH1w7q9AxZeP7j/ui/QMSPXN3tdw/PbRvErf0chXcZnw4UImiD/2u0RzUqSQ==
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/@panva/jose/-/jose-1.4.0.tgz#d1c00a8328b502b47769a03f75bb8abca37bc518"
+  integrity sha512-v3J/rHOfM9P5BP3iAaUybQwtQb4RxGsCjnx+LLlg2cZd0sVOOD1s2gVOOXQphhYwhgM4d1fmx6KURdjUDlkfAw==
   dependencies:
     asn1.js "^5.1.1"
 
@@ -138,9 +138,9 @@
   integrity sha512-1w52Nyx4Gq47uuu0EVcsHBxZFJgurQ+rTKS3qMHxR1GY2T8c2AJYd6vZoZ9q1rupaDjU0yT+Jc2XTyXkjeMA+Q==
 
 "@types/node@*":
-  version "12.0.12"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-12.0.12.tgz#cc791b402360db1eaf7176479072f91ee6c6c7ca"
-  integrity sha512-Uy0PN4R5vgBUXFoJrKryf5aTk3kJ8Rv3PdlHjl6UaX+Cqp1QE0yPQ68MPXGrZOfG7gZVNDIJZYyot0B9ubXUrQ==
+  version "12.6.2"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-12.6.2.tgz#a5ccec6abb6060d5f20d256fb03ed743e9774999"
+  integrity sha512-gojym4tX0FWeV2gsW4Xmzo5wxGjXGm550oVUII7f7G5o4BV6c7DBdiG1RRQd+y1bvqRyYtPfMK85UM95vsapqQ==
 
 "@types/node@^10.1.0", "@types/node@^10.12.0":
   version "10.14.12"
@@ -962,9 +962,9 @@ extend@~3.0.2:
   integrity sha512-fjquC59cD7CyW6urNXK0FBufkZcoiGG80wTuPujX590cB5Ttln20E2UB4S/WARVqhXffZl2LNgS+gQdPIIim/g==
 
 external-editor@^3.0.3:
-  version "3.0.3"
-  resolved "https://registry.yarnpkg.com/external-editor/-/external-editor-3.0.3.tgz#5866db29a97826dbe4bf3afd24070ead9ea43a27"
-  integrity sha512-bn71H9+qWoOQKyZDo25mOMVpSmXROAsTJVVVYzrrtol3d4y+AsKjf4Iwl2Q+IuT0kFSQ1qo166UuIwqYq7mGnA==
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/external-editor/-/external-editor-3.1.0.tgz#cb03f740befae03ea4d283caed2741a83f335495"
+  integrity sha512-hMQ4CX1p1izmuLYyZqLMO/qGNw10wSv9QDCPfzXfyFrOaCSSoRfqE1Kf1s5an66J5JZC62NewG+mK49jOCtQew==
   dependencies:
     chardet "^0.7.0"
     iconv-lite "^0.4.24"
@@ -1673,9 +1673,9 @@ lodash.find@^4.6.0:
   integrity sha1-ywcE1Hq3F4n/oN6Ll92Sb7iLE7E=
 
 lodash@^4.14.2, lodash@^4.17.11:
-  version "4.17.11"
-  resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.11.tgz#b39ea6229ef607ecd89e2c8df12536891cac9b8d"
-  integrity sha512-cQKh8igo5QUhZ7lg38DYWAxMvjSAKG0A8wGSVimP07SIUEK2UO+arSRKbRZWtelMtN5V0Hkwh5ryOto/SshYIg==
+  version "4.17.13"
+  resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.13.tgz#0bdc3a6adc873d2f4e0c4bac285df91b64fc7b93"
+  integrity sha512-vm3/XWXfWtRua0FkUyEHBZy8kCPjErNBT9fJx8Zvs+U6zjqPbTUOpkaoum3O5uiA8sm+yNMHXfYkTUHFoMxFNA==
 
 log-symbols@2.2.0:
   version "2.2.0"
@@ -2872,9 +2872,9 @@ tough-cookie@~2.4.3:
     punycode "^1.4.1"
 
 triton-core@^1.11.0:
-  version "1.11.0"
-  resolved "https://registry.yarnpkg.com/triton-core/-/triton-core-1.11.0.tgz#6753db4552b9a504d1250e49588fee5ca53be47a"
-  integrity sha512-gZ+kBdAbU4AYg9oTocg/UOMuKdof1dtPD6lYr12OXyZtTG7Pl1EI0AGUUXmEkFH8wySrk4Vk2679fEb+HVfevQ==
+  version "1.13.0"
+  resolved "https://registry.yarnpkg.com/triton-core/-/triton-core-1.13.0.tgz#f527ab3e6295f5e598d7beee03fce37b349a9c32"
+  integrity sha512-p8cK2r0C1P0KKfEgDbX+WeEyg4xtJmIcdqBhrr43WNzaJ5zP5sMZfaJ9bh/1mZeF012cylMcv3s8+Xk/6gKdcw==
   dependencies:
     amqp-connection-manager "^3.0.0"
     amqplib "^0.5.3"
@@ -3039,9 +3039,9 @@ ws@^6.1.0:
     async-limiter "~1.0.0"
 
 ws@^7.0.0:
-  version "7.0.1"
-  resolved "https://registry.yarnpkg.com/ws/-/ws-7.0.1.tgz#1a04e86cc3a57c03783f4910fdb090cf31b8e165"
-  integrity sha512-ILHfMbuqLJvnSgYXLgy4kMntroJpe8hT41dOVWM8bxRuw6TK4mgMp9VJUNsZTEc5Bh+Mbs0DJT4M0N+wBG9l9A==
+  version "7.1.0"
+  resolved "https://registry.yarnpkg.com/ws/-/ws-7.1.0.tgz#0395646c6fcc3ac56abf61ce1a42039637a6bd98"
+  integrity sha512-Swie2C4fs7CkwlHu1glMePLYJJsWjzhl1vm3ZaLplD0h7OMkZyZ6kLTB/OagiU923bZrPFXuDTeEqaEN4NWG4g==
   dependencies:
     async-limiter "^1.0.0"
 
@@ -3069,9 +3069,9 @@ xorshift@^0.2.0:
   integrity sha1-/NgiZ+k1HBPw+5xzMH8lMx0pxjo=
 
 "xtend@>=4.0.0 <4.1.0-0", xtend@^4.0.0, xtend@~4.0.0:
-  version "4.0.1"
-  resolved "https://registry.yarnpkg.com/xtend/-/xtend-4.0.1.tgz#a5c6d532be656e23db820efb943a1f04998d63af"
-  integrity sha1-pcbVMr5lbiPbgg77lDofBJmNY68=
+  version "4.0.2"
+  resolved "https://registry.yarnpkg.com/xtend/-/xtend-4.0.2.tgz#bb72779f5fa465186b1f438f674fa347fdb5db54"
+  integrity sha512-LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ==
 
 "y18n@^3.2.1 || ^4.0.0", y18n@^4.0.0:
   version "4.0.0"

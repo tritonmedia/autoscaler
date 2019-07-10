@@ -44,7 +44,7 @@ const printStatus = async () => {
 }
 
 /* eslint no-unused-vars: 0 */
-const WatcherData = {
+const a = {
   deploymentName: '',
   jobType: '',
   pendingTimeMinutes: 10
@@ -54,19 +54,6 @@ const WatcherData = {
  * @type {Map<String, Watcher>}
  */
 const watcherTable = new Map()
-
-/**
- * Publish the status to the metrics pubsub
- * @param {Object} status status object
- * @example
- *  publishStatus({
- *    event: 'scaleUp'
- * })
- * @returns {Promise}
- */
-const publishStatus = async status => {
-  return // NOOP
-}
 
 /**
  * Creates and manages a queue watcher
@@ -100,9 +87,6 @@ const init = async () => {
       const deployment = watcher.deployment
 
       await kube.scaleUp(deployment)
-      publishStatus({
-        event: 'scaleUp'
-      })
     },
     scaleDown: async function (data) {
       logger.info(`executing scaleDown on '%o'`, data)
@@ -111,9 +95,6 @@ const init = async () => {
       const deployment = watcher.deployment
 
       await kube.scaleDown(deployment)
-      publishStatus({
-        event: 'scaleDown'
-      })
     }
   }
 
